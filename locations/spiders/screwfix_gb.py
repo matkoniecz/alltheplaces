@@ -29,6 +29,8 @@ class ScrewfixGBSpider(CrawlSpider):
         item["website"] = response.url
 
         if "phone" in item and item["phone"] is not None and item["phone"].replace(" ", "").startswith("+443"):
-            item.pop("phone", None)
+            item.pop("phone", None)\
+
+        item.pop("name", None)
 
         yield item
