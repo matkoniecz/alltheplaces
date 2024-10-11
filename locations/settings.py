@@ -32,6 +32,7 @@ FEED_URI = os.environ.get("FEED_URI")
 FEED_FORMAT = os.environ.get("FEED_FORMAT")
 FEED_EXPORTERS = {
     "geojson": "locations.exporters.geojson.GeoJsonExporter",
+    "parquet": "locations.exporters.geoparquet.GeoparquetExporter",
     "ndgeojson": "locations.exporters.ld_geojson.LineDelimitedGeoJsonExporter",
     "osm": "locations.exporters.osm.OSMExporter",
 }
@@ -47,6 +48,9 @@ DOWNLOAD_DELAY = 1
 # CONCURRENT_REQUESTS_PER_DOMAIN = 16
 # CONCURRENT_REQUESTS_PER_IP = 16
 
+# Set a timeout for requests
+DOWNLOAD_TIMEOUT = 15
+
 # Disable cookies (enabled by default)
 # COOKIES_ENABLED = False
 
@@ -61,9 +65,9 @@ TELNETCONSOLE_ENABLED = False
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-# SPIDER_MIDDLEWARES = {
-#    'locations.middlewares.MyCustomSpiderMiddleware': 543,
-# }
+SPIDER_MIDDLEWARES = {
+    "locations.middlewares.track_sources.TrackSourcesMiddleware": 500,
+}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
@@ -97,11 +101,14 @@ EXTENSIONS = {
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     "locations.pipelines.duplicates.DuplicatesPipeline": 200,
+    "locations.pipelines.drop_attributes.DropAttributesPipeline": 250,
     "locations.pipelines.apply_spider_level_attributes.ApplySpiderLevelAttributesPipeline": 300,
     "locations.pipelines.apply_spider_name.ApplySpiderNamePipeline": 350,
     "locations.pipelines.country_code_clean_up.CountryCodeCleanUpPipeline": 355,
     "locations.pipelines.state_clean_up.StateCodeCleanUpPipeline": 356,
+    "locations.pipelines.address_clean_up.AddressCleanUpPipeline": 357,
     "locations.pipelines.phone_clean_up.PhoneCleanUpPipeline": 360,
+    "locations.pipelines.email_clean_up.EmailCleanUpPipeline": 370,
     "locations.pipelines.extract_gb_postcode.ExtractGBPostcodePipeline": 400,
     "locations.pipelines.assert_url_scheme.AssertURLSchemePipeline": 500,
     "locations.pipelines.drop_logo.DropLogoPipeline": 550,
@@ -161,3 +168,5 @@ REQUESTS_CACHE_BACKEND_SETTINGS = {
     "backend": "filesystem",
     "wal": True,
 }
+
+TEMPLATES_DIR = "templates/"

@@ -14,6 +14,7 @@ class ArgosSpider(SitemapSpider, StructuredDataSpider):
     sitemap_urls = ["https://www.argos.co.uk/stores_sitemap.xml"]
     sitemap_rules = [(r"https://www.argos.co.uk/stores/([\d]+)-([\w-]+)", "parse")]
     user_agent = BROWSER_DEFAULT
+    requires_proxy = True
 
     def post_process_item(self, item, response, ld_data, **kwargs):
         if item["name"].startswith("Closed - "):
@@ -30,5 +31,7 @@ class ArgosSpider(SitemapSpider, StructuredDataSpider):
             store_type, item["lat"], item["lon"] = m.groups()
             if store_type == "1" or "Collection Point" in item["name"] or "CP" in item["name"]:
                 return
+
+        item.pop("name", None)
 
         yield item

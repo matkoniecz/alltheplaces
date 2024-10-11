@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 from collections import defaultdict
@@ -24,17 +25,21 @@ DAYS_AT = {"Mo": "Mo", "Di": "Tu", "Mi": "We", "Do": "Th", "Fr": "Fr", "Sa": "Sa
 
 DAYS_EN = {
     "Monday": "Mo",
+    "Mondays": "Mo",
     "Mon": "Mo",
     "Mo": "Mo",
     "Tuesday": "Tu",
+    "Tuesdays": "Tu",
     "Tues": "Tu",
     "Tue": "Tu",
     "Tu": "Tu",
     "Wednesday": "We",
+    "Wednesdays": "We",
     "Weds": "We",
     "Wed": "We",
     "We": "We",
     "Thursday": "Th",
+    "Thursdays": "Th",
     "Thu": "Th",
     "Thr": "Th",
     "Thur": "Th",
@@ -42,16 +47,21 @@ DAYS_EN = {
     "Thurs": "Th",
     "Th": "Th",
     "Friday": "Fr",
+    "Fridays": "Fr",
     "Fri": "Fr",
     "Fr": "Fr",
     "Saturday": "Sa",
+    "Saturdays": "Sa",
     "Sat": "Sa",
     "Sa": "Sa",
     "Sunday": "Su",
+    "Sundays": "Su",
     "Sun": "Su",
     "Su": "Su",
 }
+
 DAYS_DE = {
+    # "Feiertag": "PH",
     "Montag": "Mo",
     "Mo": "Mo",
     "Dienstag": "Tu",
@@ -67,6 +77,7 @@ DAYS_DE = {
     "Sonntag": "Su",
     "So": "Su",
 }
+
 DAYS_BG = {
     "Понеделник": "Mo",
     "Пн": "Mo",
@@ -94,6 +105,7 @@ DAYS_BG = {
     "Не": "Su",
     "Нд": "Su",
 }
+
 DAYS_CH = {
     "Mo": "Mo",
     "Di": "Tu",
@@ -103,6 +115,76 @@ DAYS_CH = {
     "Sa": "Sa",
     "So": "Su",
 }
+
+DAYS_CN = {
+    # Standard Modern Chinese
+    "月曜日": "Mo",
+    "Yuèyàorì": "Mo",
+    "星期一": "Mo",
+    "Xīngqīyī": "Mo",
+    "週一": "Mo",
+    "Zhōuyī": "Mo",
+    "禮拜一": "Mo",
+    "Lǐbàiyī": "Mo",
+    "周一": "Mo",
+    "火曜日": "Tu",
+    "Huǒyàorì": "Tu",
+    "星期二": "Tu",
+    "Xīngqī'èr": "Tu",
+    "週二": "Tu",
+    "Zhōu'èr": "Tu",
+    "禮拜二": "Tu",
+    "Lǐbài'èr": "Tu",
+    "水曜日": "We",
+    "Shuǐyàorì": "We",
+    "星期三": "We",
+    "Xīngqīsān": "We",
+    "週三": "We",
+    "Zhōusān": "We",
+    "禮拜三": "We",
+    "Lǐbàisān": "We",
+    "木曜日": "Th",
+    "Mùyàorì": "Th",
+    "星期三": "We",
+    "星期四": "Th",
+    "Xīngqīsì": "Th",
+    "週四": "Th",
+    "Zhōusì": "Th",
+    "禮拜四": "Th",
+    "Lǐbàisì": "Th",
+    "金曜日": "Fr",
+    "Jīnyàorì": "Fr",
+    "星期五": "Fr",
+    "Xīngqīwǔ": "Fr",
+    "週五": "Fr",
+    "Zhōuwǔ": "Fr",
+    "禮拜五": "Fr",
+    "Lǐbàiwǔ": "Fr",
+    "土曜日": "Sa",
+    "Tǔyàorì": "Sa",
+    "星期六": "Sa",
+    "Xīngqīliù": "Sa",
+    "週六": "Sa",
+    "Zhōuliù": "Sa",
+    "禮拜六": "Sa",
+    "Lǐbàiliù": "Sa",
+    "日曜日": "Su",
+    "Rìyàorì": "Su",
+    "星期日": "Su",
+    "Xīngqīrì": "Su",
+    "星期天": "Su",
+    "Xīngqītiān": "Su",
+    "週日": "Su",
+    "Zhōurì": "Su",
+    "週天": "Su",
+    "Zhōutiān": "Su",
+    "禮拜天": "Su",
+    "Lǐbàitiān": "Su",
+    "禮拜日": "Su",
+    "Lǐbàirì": "Su",
+    "周日": "Su",
+}
+
 DAYS_CZ = {
     "Pondělí": "Mo",
     "Po": "Mo",
@@ -119,6 +201,7 @@ DAYS_CZ = {
     "Neděle": "Su",
     "Ne": "Su",
 }
+
 DAYS_GR = {
     "Δε": "Mo",
     "Δευτέρα": "Mo",
@@ -135,6 +218,22 @@ DAYS_GR = {
     "Κυ": "Su",
     "Κυριακή": "Su",
 }
+
+DAYS_HR = {
+    "Ponedjeljak": "Mo",
+    "Pon": "Mo",
+    "Utorak": "Tu",
+    "Srijeda": "We",
+    "Četvrtak": "Th",
+    "Čet": "Th",
+    "Petak": "Fr",
+    "Pet": "Fr",
+    "Subota": "Sa",
+    "Sub": "Sa",
+    "Nedjelja": "Su",
+    "Ned": "Su",
+}
+
 DAYS_HU = {
     "Hétfő": "Mo",
     "Hé": "Mo",
@@ -170,6 +269,36 @@ DAYS_IL = {
     "יום ראשון": "Su",
 }
 
+DAYS_KR = {
+    "월요일": "Mo",
+    "화요일": "Tu",
+    "수요일": "We",
+    "목요일": "Th",
+    "금요일": "Fr",
+    "토요일": "Sa",
+    "일요일": "Su",
+}
+
+DAYS_LT = {
+    "pirmadienis": "Mo",
+    "antradienis": "Tu",
+    "trečiadienis": "We",
+    "ketvirtadienis": "Th",
+    "penktadienis": "Fr",
+    "šeštadienis": "Sa",
+    "sekmadienis": "Su",
+    "I": "Mo",
+    "II": "Tu",
+    "III": "We",
+    "IV": "Th",
+    "V": "Fr",
+    "VI": "Sa",
+    "VII": "Su",
+    "Iv": "Th",
+    "Vi": "Sa",
+    "Vii": "Su",
+}
+
 DAYS_SE = {
     "Måndag": "Mo",
     "Mån": "Mo",
@@ -189,18 +318,25 @@ DAYS_SE = {
 DAYS_SI = {
     "Po": "Mo",
     "Pon": "Mo",
+    "Ponedeljek": "Mo",
     "To": "Tu",
     "Tor": "Tu",
+    "Torek": "Tu",
     "Sr": "We",
     "Sre": "We",
+    "Sreda": "We",
     "Če": "Th",
     "Čet": "Th",
+    "Četrtek": "Th",
     "Pe": "Fr",
     "Pet": "Fr",
+    "Petek": "Fr",
     "So": "Sa",
     "Sob": "Sa",
+    "Sobota": "Sa",
     "Ne": "Su",
     "Ned": "Su",
+    "Nedelja": "Su",
 }
 DAYS_IT = {
     "Lunedì": "Mo",
@@ -266,51 +402,81 @@ DAYS_PL = {
     "Pn": "Mo",
     "Po": "Mo",
     "Pon": "Mo",
+    "Pn.": "Mo",
+    "Pon.": "Mo",
     "Poniedziałek": "Mo",
     "Wt": "Tu",
     "Wto": "Tu",
+    "Wto.": "Tu",
     "Wtorek": "Tu",
     "Śr": "We",
     "Sr": "We",
     "Sro": "We",
     "Śro": "We",
+    "Śro.": "We",
     "Środa": "We",
     "Cz": "Th",
     "Czw": "Th",
+    "Czw.": "Th",
     "Czwartek": "Th",
     "Pt": "Fr",
+    "Pt.": "Fr",
     "Pi": "Fr",
     "Pia": "Fr",
     "Piątek": "Fr",
     "Sb": "Sa",
     "So": "Sa",
     "Sob": "Sa",
+    "Sob.": "Sa",
     "Sobota": "Sa",
     "Nd": "Su",
     "Ni": "Su",
     "Nie": "Su",
+    "Ndz": "Su",
     "Niedz": "Su",
     "Niedzela": "Su",
     "Niedziela": "Su",
+    "Niedziele": "Su",
 }
 DAYS_PT = {
+    # "Feriado": "PH",
     # "Se": "Mo",
+    "Segunda": "Mo",
     "Te": "Tu",
+    "Terça": "Tu",
     # "Qu": "We",
+    "Quarta": "We",
     # "Qu": "Th",
+    "Quinta": "Th",
     # "Se": "Fr",
+    "Sexta": "Fr",
+    "Sábado": "Sa",
     "Sa": "Sa",
     "Sá": "Sa",
+    "Sab": "Sa",
+    "Sáb": "Sa",
     "Do": "Su",
+    "Dom": "Su",
+    "Domingo": "Su",
 }
 DAYS_SK = {
     "Po": "Mo",
+    "Pondelok": "Mo",
     "Ut": "Tu",
+    "Utorok": "Tu",
+    "Útorok": "Tu",
     "St": "We",
+    "Streda": "We",
     "Št": "Th",
+    "Štvrtok": "Th",
+    "Stvrtok": "Th",
     "Pi": "Fr",
+    "Piatok": "Fr",
     "So": "Sa",
+    "Sobota": "Sa",
     "Ne": "Su",
+    "Nedeľa": "Su",
+    "Nedela": "Su",
 }
 DAYS_RU = {
     "Пн": "Mo",
@@ -415,10 +581,12 @@ DAYS_ES = {
     "Vi": "Fr",
     "Sabado": "Sa",
     "Sábado": "Sa",
+    "Sábados": "Sa",
     "Sab": "Sa",
     "Sáb": "Sa",
     "Sa": "Sa",
     "Domingo": "Su",
+    "Domingos": "Su",
     "Dom": "Su",
     "Do": "Su",
 }
@@ -462,6 +630,52 @@ DAYS_SR = {
     "Недеља": "Su",
 }
 
+DAYS_TR = {
+    "Pazartesi": "Mo",
+    "Salı": "Tu",
+    "Çarşamba": "We",
+    "Perşembe": "Th",
+    "Cuma": "Fr",
+    "Cumartesi": "Sa",
+    "Pazar": "Su",
+}
+
+# See https://github.com/alltheplaces/alltheplaces/issues/7360
+# A list orded by Languages most frequently used for web content as of January 2024, by share of websites.
+# See WPStoreLocator for example usage.
+DAYS_BY_FREQUENCY = [
+    DAYS_EN,
+    DAYS_ES,
+    DAYS_DE,
+    DAYS_RU,
+    # Japanese missing
+    DAYS_FR,
+    DAYS_PT,
+    DAYS_IT,
+    DAYS_TR,
+    DAYS_DK,
+    DAYS_PL,
+    # Persian
+    DAYS_CZ,
+    # And everything else
+    DAYS_AT,
+    DAYS_BG,
+    DAYS_CH,
+    DAYS_FI,
+    DAYS_GR,
+    DAYS_HR,
+    DAYS_HU,
+    DAYS_IL,
+    DAYS_NL,
+    DAYS_NO,
+    DAYS_RO,
+    DAYS_RS,
+    DAYS_SE,
+    DAYS_SI,
+    DAYS_SK,
+    DAYS_SR,
+]
+
 NAMED_DAY_RANGES_DK = {
     "Hverdage": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],  # Weekdays
 }
@@ -489,6 +703,13 @@ NAMED_TIMES_RU = {
     "Круглосуточно": ["00:00", "23:59"],  # 24/7
 }
 
+NAMED_DAY_RANGES_KR = {
+    "연중무휴": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "연중무": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "중무휴": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "연중": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+}
+
 DELIMITERS_EN = [
     "-",
     "–",
@@ -503,10 +724,26 @@ DELIMITERS_EN = [
     "until",
 ]
 
+DELIMITERS_DE = ["-", "–", "—", "―", "‒", "bis"]
+
 DELIMITERS_ES = [
     "-",
     "a",
     "y",
+    "de",
+]
+
+DELIMITERS_FR = ["-", "–", "—", "―", "‒", "au", "à", "de"]
+
+DELIMITERS_PT = [
+    "-",
+    "–",
+    "—",
+    "―",
+    "‒",
+    "a",
+    "das",
+    "às",
     "de",
 ]
 
@@ -521,6 +758,10 @@ DELIMITERS_PL = [
 ]
 
 DELIMITERS_RU = DELIMITERS_EN + ["с", "по", "до", "в", "во"]
+
+DELIMITERS_KR = DELIMITERS_EN + ["~"]
+
+logger = logging.getLogger(__name__)
 
 
 def day_range(start_day, end_day):
@@ -549,10 +790,32 @@ def sanitise_day(day: str, days: {} = DAYS_EN) -> str:
 class OpeningHours:
     def __init__(self):
         self.day_hours = defaultdict(set)
+        self.days_closed = set()
+
+    def __bool__(self):
+        return bool(self.day_hours or self.days_closed)
 
     def add_days_range(self, days: [str], open_time, close_time, time_format="%H:%M"):
         for day in days:
             self.add_range(day, open_time, close_time, time_format=time_format)
+
+    def set_closed(self, days: str | list[str]):
+        """
+        Mark days where the location has stated they are closed; as opposed to simply not provided or known from survey hours.
+
+        This differs slightly to https://wiki.openstreetmap.org/wiki/Key:opening_hours; in that 'off' or 'closed'
+        are more frequently output.
+
+        Recommended to use with an appropriate helper to pass a specific string or list, ie:
+        `set_closed(DAYS_SR["Ponedeljak"])` or `set_closed(["Mo", "Tu", "We"])`
+        """
+        for day in [days] if isinstance(days, str) else days:
+            day = sanitise_day(day)
+
+            if day not in DAYS:
+                raise ValueError(f"day must be one of {DAYS}, not {day!r}")
+            self.day_hours.pop(day, None)
+            self.days_closed.add(day)
 
     def add_range(self, day, open_time, close_time, time_format="%H:%M"):
         day = sanitise_day(day)
@@ -562,6 +825,15 @@ class OpeningHours:
 
         if not open_time or not close_time:
             return
+        if (
+            isinstance(open_time, str)
+            and isinstance(close_time, str)
+            and open_time.lower() == "closed"
+            and close_time.lower() == "closed"
+        ):
+            self.day_hours.pop(day, None)
+            self.days_closed.add(day)
+            return
         if isinstance(open_time, str):
             if open_time.lower() == "closed":
                 return
@@ -570,11 +842,14 @@ class OpeningHours:
                 return
             if close_time == "24:00" or close_time == "00:00":
                 close_time = "23:59"
+            if close_time == "24:00:00" or close_time == "00:00:00":
+                close_time = "23:59:00"
         if not isinstance(open_time, time.struct_time):
             open_time = time.strptime(open_time, time_format)
         if not isinstance(close_time, time.struct_time):
             close_time = time.strptime(close_time, time_format)
 
+        self.days_closed.discard(day)
         self.day_hours[day].add((open_time, close_time))
 
     def as_opening_hours(self) -> str:
@@ -582,14 +857,17 @@ class OpeningHours:
         this_day_group = None
 
         for day in DAYS:
-            hours = ",".join(
-                "%s-%s"
-                % (
-                    time.strftime("%H:%M", h[0]),
-                    time.strftime("%H:%M", h[1]).replace("23:59", "24:00"),
+            if day in self.days_closed:
+                hours = "closed"
+            else:
+                hours = ",".join(
+                    "%s-%s"
+                    % (
+                        time.strftime("%H:%M", h[0]),
+                        time.strftime("%H:%M", h[1]).replace("23:59", "24:00"),
+                    )
+                    for h in sorted(self.day_hours[day])
                 )
-                for h in sorted(self.day_hours[day])
-            )
 
             if not this_day_group:
                 this_day_group = {"from_day": day, "to_day": day, "hours": hours}
@@ -602,79 +880,19 @@ class OpeningHours:
         day_groups.append(this_day_group)
 
         opening_hours = ""
-        if len(day_groups) == 1 and day_groups[0]["hours"] in (
-            "00:00-24:00",
-            "00:00-00:00",
-        ):
-            opening_hours = "24/7"
-        else:
-            for day_group in day_groups:
-                if not day_group["hours"]:
-                    continue
-                elif day_group["from_day"] == day_group["to_day"]:
-                    opening_hours += "{from_day} {hours}; ".format(**day_group)
-                elif day_group["from_day"] == "Su" and day_group["to_day"] == "Sa":
-                    opening_hours += "{hours}; ".format(**day_group)
-                else:
-                    opening_hours += "{from_day}-{to_day} {hours}; ".format(**day_group)
-            opening_hours = opening_hours[:-2]
+
+        for day_group in day_groups:
+            if not day_group["hours"]:
+                continue
+            elif day_group["from_day"] == day_group["to_day"]:
+                opening_hours += "{from_day} {hours}; ".format(**day_group)
+            elif day_group["from_day"] == "Su" and day_group["to_day"] == "Sa":
+                opening_hours += "{hours}; ".format(**day_group)
+            else:
+                opening_hours += "{from_day}-{to_day} {hours}; ".format(**day_group)
+        opening_hours = opening_hours[:-2]
 
         return opening_hours
-
-    def from_linked_data(self, linked_data, time_format: str = "%H:%M"):
-        if linked_data.get("openingHoursSpecification"):
-            for rule in linked_data["openingHoursSpecification"]:
-                if not isinstance(rule, dict):
-                    continue
-                if not rule.get("dayOfWeek") or not rule.get("opens") or not rule.get("closes"):
-                    continue
-
-                days = rule["dayOfWeek"]
-                if not isinstance(days, list):
-                    days = [days]
-
-                for day in days:
-                    self.add_range(
-                        day=day,
-                        open_time=rule["opens"],
-                        close_time=rule["closes"],
-                        time_format=time_format,
-                    )
-        elif linked_data.get("openingHours"):
-            rules = linked_data["openingHours"]
-            if not isinstance(rules, list):
-                rules = re.findall(
-                    r"((\w{2,3}|\w{2,3}\s?\-\s?\w{2,3}|(\w{2,3},)+\w{2,3})\s(\d\d:\d\d)\s?\-\s?(\d\d:\d\d))",
-                    rules,
-                )
-                rules = [r[0] for r in rules]
-
-            for rule in rules:
-                if not rule:
-                    continue
-                days, time_ranges = rule.split(" ", 1)
-
-                if "-" not in time_ranges:
-                    continue
-
-                for time_range in time_ranges.split(","):
-                    start_time, end_time = time_range.split("-")
-
-                    start_time = start_time.strip()
-                    end_time = end_time.strip()
-
-                    if "-" in days:
-                        start_day, end_day = days.split("-")
-
-                        start_day = sanitise_day(start_day)
-                        end_day = sanitise_day(end_day)
-
-                        for day in day_range(start_day, end_day):
-                            self.add_range(day, start_time, end_time, time_format)
-                    else:
-                        for day in days.split(","):
-                            if d := sanitise_day(day):
-                                self.add_range(d, start_time, end_time, time_format)
 
     @staticmethod
     def delimiters_regex(delimiters: list[str] = DELIMITERS_EN) -> str:

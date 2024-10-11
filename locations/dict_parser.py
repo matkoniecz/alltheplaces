@@ -2,33 +2,94 @@ from locations.items import Feature
 
 
 class DictParser:
+    # Variations can't handle capitalised acronyms such as "ID" so
+    # the common variants of case including such acronyms need to
+    # all be listed below.
     ref_keys = [
+        # EN
         "ref",
         "id",
         "identifier",
         "store-id",
+        "StoreID",
+        "storeID",
+        "storeId",
         "store-number",
         "shop-number",
         "location-id",
+        "LocationID",
+        "locationID",
         "location-number",
         "slug",
         "store-code",
         "item-id",
+        "ItemID",
+        "itemID",
+        "branch-id",
+        "BranchID",
+        "branchID",
+        "branch-code",
+        # ES
+        "id-tienda",
+        "ID-tienda",
     ]
 
-    name_keys = ["name", "store-name", "display-name", "title", "business-name", "item-name", "location-name"]
+    name_keys = [
+        # EN
+        "name",
+        "store-name",
+        "display-name",
+        "title",
+        "business-name",
+        "item-name",
+        "location-name",
+        "loc-name",
+        "branch-name",
+        # ES
+        "nombre",
+    ]
 
-    house_number_keys = ["house-number", "house-no", "street-number", "street-no", "address-street-no"]
+    house_number_keys = [
+        # EN
+        "house-number",
+        "house-no",
+        "street-number",
+        "street-no",
+        "address-street-no",
+    ]
+
+    full_address_keys = [
+        # EN
+        "address",
+        "addr",
+        "store-address",
+        "physical-address",
+        "full-address",
+        "formattedAddress",
+        # ES
+        "direccion",  # "address"
+    ]
+
+    street_keys = [
+        # EN
+        "street",
+        "street-name",
+        # DE
+        "strasse",
+    ]
 
     street_address_keys = [
         # EN
         "street-address",
         "address1",
+        "address-line",
         "address-line1",
         "line1",
         "address-line-one",
         # JP
         "町域以下住所",  # "address below town limits"
+        # IT
+        "indirizzo",
     ]
 
     city_keys = [
@@ -36,14 +97,24 @@ class DictParser:
         "address-locality",
         "city",
         "address-city",
+        "physical-city",
         "town",
         "locality",
         "suburb",
+        "physical-suburb",
         "city-name",
+        "store-city",
         # JP
         "市区町村",  # "municipality"
         # PL
         "miasto",
+        # ES
+        "ciudad",  # "city"
+        # IT
+        "comune",  # "comune",
+        "citta",
+        # DE
+        "ort",  # location
     ]
 
     region_keys = [
@@ -56,15 +127,22 @@ class DictParser:
         "state-code",
         "county",
         "state-name",
+        "store-state",
+        "store-province",
+        "storeProvince",
         # JP
         "都道府県",  # "prefecture"
+        # IT
+        "regione",  # "region"
     ]
 
     country_keys = [
+        # EN
         "country-code",
         "address-country",
         "country",
         "country-name",
+        "store-country",
     ]
 
     isocode_keys = [
@@ -82,74 +160,151 @@ class DictParser:
         "postal",
         "zip-code",
         "address-postal-code",
+        "store-postcode",
+        "store-post-code",
+        "store-postal-code",
+        "store-zip",
+        "store-zip-code",
+        "store-zipcode",
         # JP
         "郵便番号",  # "post code"
+        # DE
+        "plz",
+        "postleitzahl",
+        # IT
+        "cap",
     ]
 
-    email_keys = ["email", "contact-email", "email-address", "email1", "store-email"]
+    email_keys = [
+        # EN
+        "email",
+        "contact-email",
+        "email-address",
+        "email1",
+        "store-email",
+    ]
 
     phone_keys = [
+        # EN
         "phone-number",
         "phone",
         "telephone",
         "tel",
+        "tel-no",
         "telephone-number",
         "telephone1",
         "contact-number",
         "phone-no",
         "contact-phone",
         "store-phone",
+        "primary-phone",
+        "primaryNumber",
+        "main-phone",
+        "branch-phone",
+        "branch-telephone",
+        # ES
+        "telefono",  # "phone"
     ]
 
     lat_keys = [
+        # EN
         "latitude",
         "lat",
+        "store-latitude",
+        "storeLatitude",
         "display-lat",
         "yext-display-lat",
-        "mapLatitude",
-        "geoLat",
+        "map-latitude",
+        "geo-lat",
+        "GPSLat",
+        "geographicCoordinatesLatitude",
+        # ES
+        "coordenaday",  # "Coordinate Y"
+        "latitud",
     ]
 
     lon_keys = [
+        # EN
         "longitude",
         "lon",
         "long",
         "lng",
+        "store-longitude",
+        "storeLongitude",
         "display-lng",
         "yext-display-lng",
-        "mapLongitude",
-        "geoLng",
+        "map-longitude",
+        "geo-lng",
+        "GPSLong",
+        "geographicCoordinatesLongitude",
+        # ES
+        "coordenadax",  # "Coordinate X"
+        "longitud",
     ]
 
-    website_keys = ["url", "website", "permalink", "store-url", "storeURL", "website-url", "websiteURL"]
+    website_keys = [
+        # EN
+        "url",
+        "website",
+        "permalink",
+        "store-url",
+        "storeURL",
+        "website-url",
+        "websiteURL",
+        "location-url",
+        "web-address",
+        "WebSiteURL",
+    ]
+
+    hours_keys = [
+        "hours",
+        "opening-hours",
+        "open-hours",
+        "store-opening-hours",
+        "store-hours",
+        # IT
+        "orario",
+    ]
 
     @staticmethod
-    def parse(obj) -> Feature:
+    def parse(obj: dict) -> Feature:
         item = Feature()
 
         item["ref"] = DictParser.get_first_key(obj, DictParser.ref_keys)
         item["name"] = DictParser.get_first_key(obj, DictParser.name_keys)
 
-        location = DictParser.get_first_key(
-            obj,
-            [
-                "location",
-                "geo-location",
-                "geo",
-                "geo-point",
-                "geocoded-coordinate",
-                "coordinates",
-                "geo-position",
-                "position",
-            ],
-        )
-        # If not a good location object then use the parent
-        if not location or not isinstance(location, dict):
-            location = obj
-        item["lat"] = DictParser.get_first_key(location, DictParser.lat_keys)
-        item["lon"] = DictParser.get_first_key(location, DictParser.lon_keys)
+        if (
+            obj.get("geometry")
+            and obj["geometry"].get("type")
+            in ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon"]
+            and isinstance(obj["geometry"].get("coordinates"), list)
+        ):
+            item["geometry"] = obj["geometry"]
+        else:
+            location = DictParser.get_first_key(
+                obj,
+                [
+                    "location",
+                    "geo-location",
+                    "geo",
+                    "geo-point",
+                    "geocoded-coordinate",
+                    "coordinates",
+                    "coords",
+                    "geo-position",
+                    "position",
+                    "positions",
+                    "display-coordinate",
+                    "yextDisplayCoordinate",
+                ],
+            )
+            # If not a good location object then use the parent
+            if not location or not isinstance(location, dict):
+                location = obj
+            item["lat"] = DictParser.get_first_key(location, DictParser.lat_keys)
+            item["lon"] = DictParser.get_first_key(location, DictParser.lon_keys)
 
-        address = DictParser.get_first_key(obj, ["address", "addr", "storeaddress", "physicalAddress", "full-address"])
+        address = DictParser.get_first_key(obj, DictParser.full_address_keys)
 
         if address and isinstance(address, str):
             item["addr_full"] = address
@@ -158,7 +313,7 @@ class DictParser:
             address = obj
 
         item["housenumber"] = DictParser.get_first_key(address, DictParser.house_number_keys)
-        item["street"] = DictParser.get_first_key(address, ["street", "street-name"])
+        item["street"] = DictParser.get_first_key(address, DictParser.street_keys)
         item["street_address"] = DictParser.get_first_key(address, DictParser.street_address_keys)
         item["city"] = DictParser.get_first_key(address, DictParser.city_keys)
         item["state"] = DictParser.get_first_key(address, DictParser.region_keys)

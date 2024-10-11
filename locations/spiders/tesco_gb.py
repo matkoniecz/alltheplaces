@@ -40,6 +40,17 @@ class TescoGBSpider(SitemapSpider, StructuredDataSpider):
     ]
     wanted_types = ["Pharmacy", "GasStation", "CafeOrCoffeeShop", "GroceryStore"]
     user_agent = BROWSER_DEFAULT
+    requires_proxy = True
+    strip_names = [
+        "Tesco Café",
+        "Tesco Petrol Filling Station",
+        "Tesco Pharmacy",
+        "Extra",
+        "Superstore",
+        "Express",
+        "Esso",
+    ]
+    drop_attributes = {"email", "image"}
 
     def post_process_item(self, item, response, ld_data, **kwargs):
         apply_category_from_ld(item, ld_data)
@@ -57,6 +68,11 @@ class TescoGBSpider(SitemapSpider, StructuredDataSpider):
             elif store_details["storeformat"] == "Extra":
                 apply_category(Categories.SHOP_SUPERMARKET, item)
                 item.update(self.TESCO_EXTRA)
+
+        branch = item.pop("name")
+        for suffix in self.strip_names:
+            branch = branch.removesuffix(suffix).removesuffix(" ")
+        item["branch"] = branch
 
         yield item
 

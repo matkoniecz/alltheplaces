@@ -1,4 +1,3 @@
-import json
 import time
 
 from locations.hours import (
@@ -6,6 +5,7 @@ from locations.hours import (
     DAYS_BG,
     DAYS_DE,
     DAYS_ES,
+    DAYS_PL,
     DAYS_RU,
     DELIMITERS_ES,
     DELIMITERS_RU,
@@ -98,7 +98,7 @@ def test_twentyfour_seven():
     o.add_range("Sa", "0:00", "23:59")
     o.add_range("Su", "0:00", "23:59")
 
-    assert o.as_opening_hours() == "24/7"
+    assert o.as_opening_hours() == "Mo-Su 00:00-24:00"
 
 
 def test_no_opening_hours():
@@ -140,222 +140,12 @@ def test_sanitise_days():
     assert sanitise_day("Do", DAYS_DE) == "Th"
 
 
-def test_ld_parse():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Store",
-                "name": "Middle of Nowhere Foods",
-                "openingHoursSpecification":
-                [
-                    {
-                        "@type": "OpeningHoursSpecification",
-                        "dayOfWeek": [
-                            "http://schema.org/Monday",
-                            "https://schema.org/Tuesday",
-                            "Wednesday",
-                            "http://schema.org/Thursday",
-                            "http://schema.org/Friday"
-                        ],
-                        "opens": "09:00",
-                        "closes": "11:00"
-                    },
-                    {
-                        "@type": "OpeningHoursSpecification",
-                        "dayOfWeek": "http://schema.org/Saturday",
-                        "opens": "12:00",
-                        "closes": "14:00"
-                    }
-                ]
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Fr 09:00-11:00; Sa 12:00-14:00"
-
-
-def test_ld_parse_opening_hours():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Pharmacy",
-                "name": "Philippa's Pharmacy",
-                "description": "A superb collection of fine pharmaceuticals for your beauty and healthcare convenience, a department of Delia's Drugstore.",
-                "openingHours": "Mo,Tu,We,Th 09:00-12:00",
-                "telephone": "+18005551234"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Th 09:00-12:00"
-
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Pharmacy",
-                "name": "Philippa's Pharmacy",
-                "description": "A superb collection of fine pharmaceuticals for your beauty and healthcare convenience, a department of Delia's Drugstore.",
-                "openingHours": "Mo-Th 09:00-12:00",
-                "telephone": "+18005551234"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Th 09:00-12:00"
-
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Pharmacy",
-                "name": "Philippa's Pharmacy",
-                "description": "A superb collection of fine pharmaceuticals for your beauty and healthcare convenience, a department of Delia's Drugstore.",
-                "openingHours": "Mo-Tu 09:00-12:00 We,Th 09:00-12:00",
-                "telephone": "+18005551234"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Th 09:00-12:00"
-
-
-def test_ld_parse_opening_hours_days_3_chars():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Pharmacy",
-                "name": "Philippa's Pharmacy",
-                "description": "A superb collection of fine pharmaceuticals for your beauty and healthcare convenience, a department of Delia's Drugstore.",
-                "openingHours": "Mon-Thu 09:00-12:00",
-                "telephone": "+18005551234"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Th 09:00-12:00"
-
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Pharmacy",
-                "name": "Philippa's Pharmacy",
-                "description": "A superb collection of fine pharmaceuticals for your beauty and healthcare convenience, a department of Delia's Drugstore.",
-                "openingHours": "Mon-Tue 09:00-12:00 Wed,Thu 09:00-12:00",
-                "telephone": "+18005551234"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Th 09:00-12:00"
-
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Pharmacy",
-                "openingHours": "Mon-Sat 10:00 - 19:00 Sun 12:00-17:00"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Sa 10:00-19:00; Su 12:00-17:00"
-
-
-def test_ld_parse_opening_hours_array():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": ["TouristAttraction", "AmusementPark"],
-                "name": "Disneyland Paris",
-                "description": "It's an amusement park in Marne-la-Vallée, near Paris, in France and is the most visited theme park in all of France and Europe.",
-                "openingHours":["Mo-Fr 10:00-19:00", "Sa 10:00-22:00", "Su 10:00-21:00"],
-                "isAccessibleForFree": false,
-                "currenciesAccepted": "EUR",
-                "paymentAccepted":"Cash, Credit Card",
-                "url":"http://www.disneylandparis.it/"
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Fr 10:00-19:00; Sa 10:00-22:00; Su 10:00-21:00"
-
-
-def test_ld_parse_opening_hours_day_range():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "openingHours": ["Th-Tu 09:00-17:00"]
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Tu 09:00-17:00; Th-Su 09:00-17:00"
-
-
-def test_ld_parse_opening_hours_array_with_commas():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "openingHours": ["Mo-Su 00:00-01:00, 04:00-00:00"]
-            }
-            """
-        )
-    )
-    assert o.as_opening_hours() == "Mo-Su 00:00-01:00,04:00-24:00"
-
-
-def test_ld_parse_time_format():
-    o = OpeningHours()
-    o.from_linked_data(
-        json.loads(
-            """
-            {
-                "@context": "https://schema.org",
-                "@type": "Store",
-                "name": "Middle of Nowhere Foods",
-                "openingHoursSpecification":
-                [
-                    {
-                        "@type": "OpeningHoursSpecification",
-                        "dayOfWeek": "http://schema.org/Saturday",
-                        "opens": "12:00:00",
-                        "closes": "14:00:00"
-                    }
-                ]
-            }
-            """
-        ),
-        "%H:%M:%S",
-    )
-    assert o.as_opening_hours() == "Sa 12:00-14:00"
+def test_opening_hours_closed():
+    oh = OpeningHours()
+    oh.set_closed("Su")
+    assert oh.as_opening_hours() == "Su closed"
+    oh.set_closed(DAYS)
+    assert oh.as_opening_hours() == "Mo-Su closed"
 
 
 def test_add_ranges_from_string():
@@ -381,7 +171,7 @@ def test_add_ranges_from_string():
 
     o = OpeningHours()
     o.add_ranges_from_string("Monday - Sunday: 00:00 - 23:59")
-    assert o.as_opening_hours() == "24/7"
+    assert o.as_opening_hours() == "Mo-Su 00:00-24:00"
 
     o = OpeningHours()
     o.add_ranges_from_string("Monday: 08:00 - Midday, 14:00 - Midnight   tue-sat: Midnight-0800")
@@ -430,3 +220,38 @@ def test_add_ranges_from_string():
         DELIMITERS_RU,
     )
     assert o.as_opening_hours() == "Mo-Fr 10:00-21:00; Sa 10:00-20:00; Su 10:00-21:00"
+
+    o = OpeningHours()
+    o.add_ranges_from_string(
+        "pon.-sob. 10:00-18:00",
+        DAYS_PL,
+    )
+    assert o.as_opening_hours() == "Mo-Sa 10:00-18:00"
+
+    o = OpeningHours()
+    o.add_ranges_from_string(
+        "pn - pt 11:00 - 19:00",
+        DAYS_PL,
+    )
+    assert o.as_opening_hours() == "Mo-Fr 11:00-19:00"
+
+    o = OpeningHours()
+    o.add_ranges_from_string(
+        "pon-pt 08:00-19:00<br>sob 09:00-15:00",
+        DAYS_PL,
+    )
+    assert o.as_opening_hours() == "Mo-Fr 08:00-19:00; Sa 09:00-15:00"
+
+
+def test_oh_as_bool():
+    # https://github.com/alltheplaces/alltheplaces/pull/8779#issue-2395034394
+    o = OpeningHours()
+    assert not o
+
+    o = OpeningHours()
+    o.add_range("Mo", "09:00", "17:00")
+    assert o
+
+    o = OpeningHours()
+    o.set_closed("Mo")
+    assert o

@@ -5,7 +5,7 @@ from locations.structured_data_spider import StructuredDataSpider
 
 class PapaJohnsSpider(SitemapSpider, StructuredDataSpider):
     name = "papa_johns"
-    item_attributes = {"brand": "Papa John's Pizza", "brand_wikidata": "Q2759586"}
+    item_attributes = {"brand": "Papa John's", "brand_wikidata": "Q2759586"}
     allowed_domains = ["papajohns.com"]
     sitemap_urls = ["https://locations.papajohns.com/sitemap.xml"]
     sitemap_rules = [
@@ -15,7 +15,7 @@ class PapaJohnsSpider(SitemapSpider, StructuredDataSpider):
         )
     ]
     wanted_types = ["FastFoodRestaurant"]
-    download_delay = 0.2
+    drop_attributes = {"image"}
 
     def post_process_item(self, item, response, ld_data, **kwargs):
         if name := item.get("name", "").lower():
@@ -23,5 +23,7 @@ class PapaJohnsSpider(SitemapSpider, StructuredDataSpider):
                 return
             else:
                 item["branch"] = item.pop("name").removeprefix("Papa Johns Pizza ")
+
+        item["website"] = response.urljoin(item["website"])
 
         yield item

@@ -1,27 +1,38 @@
-from scrapy.spiders import SitemapSpider
+from typing import Any
 
-from locations.categories import Categories, apply_category
-from locations.spiders.vapestore_gb import clean_address
-from locations.structured_data_spider import StructuredDataSpider
+from scrapy.http import Response
+from scrapy.spiders import Spider
+
+from locations.categories import Categories, Extras, apply_category, apply_yes_no
+from locations.dict_parser import DictParser
+from locations.items import set_closed
+from locations.pipelines.address_clean_up import merge_address_lines
+
+PIZZA_HUT = {"brand": "Pizza Hut", "brand_wikidata": "Q191615"}
+PIZZA_HUT_DELIVERY = {"brand": "Pizza Hut Delivery", "brand_wikidata": "Q107293079"}
 
 
-class PizzaHutGB(SitemapSpider, StructuredDataSpider):
+class PizzaHutGBSpider(Spider):
     name = "pizza_hut_gb"
-    item_attributes = {"brand": "Pizza Hut", "brand_wikidata": "Q191615"}
-    PIZZA_HUT_DELIVERY = {"brand": "Pizza Hut Delivery", "brand_wikidata": "Q107293079"}
-    sitemap_urls = ["https://www.pizzahut.co.uk/sitemap.xml"]
-    sitemap_rules = [(r"https:\/\/www\.pizzahut\.co\.uk\/huts\/[-\w]+\/([-.\w]+)\/$", "parse_sd")]
+    start_urls = ["https://api.pizzahut.io/v1/huts/?sector=uk-1", "https://api.pizzahut.io/v1/huts/?sector=uk-2"]
 
-    def post_process_item(self, item, response, ld_data, **kwargs):
-        item["street_address"] = clean_address(item["street_address"])
+    def parse(self, response: Response, **kwargs: Any) -> Any:
+        for location in response.json():
+            item = DictParser.parse(location)
+            item["branch"] = item.pop("name")
+            item["street_address"] = merge_address_lines(location["address"]["lines"])
 
-        if item["website"].startswith("https://www.pizzahut.co.uk/huts/"):
-            item.update(self.PIZZA_HUT_DELIVERY)
-            apply_category(Categories.FAST_FOOD, item)
-        else:
-            apply_category(Categories.RESTAURANT, item)
+            if location["closed"] is True:
+                set_closed(item)
 
-        if not item["opening_hours"]:
-            return
+            if location["type"] == "restaurant":
+                item.update(PIZZA_HUT)
+                apply_category(Categories.RESTAURANT, item)
+            elif location["type"] == "delivery":
+                item.update(PIZZA_HUT_DELIVERY)
+                apply_category(Categories.FAST_FOOD, item)
 
-        yield item
+            apply_yes_no(Extras.DELIVERY, item, location["allowedDisposition"]["delivery"])
+            apply_yes_no(Extras.TAKEAWAY, item, location["allowedDisposition"]["collection"])
+
+            yield item

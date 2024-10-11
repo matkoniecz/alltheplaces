@@ -1,3 +1,5 @@
+from json import loads
+
 from scrapy import Spider
 from scrapy.http import JsonRequest
 
@@ -10,13 +12,16 @@ class CountdownNZSpider(Spider):
     item_attributes = {"brand": "Countdown", "brand_wikidata": "Q5176845"}
     allowed_domains = ["api.cdx.nz"]
     start_urls = ["https://api.cdx.nz/site-location/api/v1/sites?latitude=-42&longitude=174&maxResults=10000"]
+    requires_proxy = "NZ"
 
     def start_requests(self):
         for url in self.start_urls:
             yield JsonRequest(url=url)
 
     def parse(self, response):
-        for location in response.json()["siteDetail"]:
+        # Playwright page responses for JSON data get wrapped in HTML.
+        json_blob = loads(response.xpath("//pre/text()").get())
+        for location in json_blob["siteDetail"]:
             item = DictParser.parse(location["site"])
             if location["site"].get("email") == "null":
                 item.pop("email", None)

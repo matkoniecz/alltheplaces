@@ -82,6 +82,8 @@ class OrlenSpider(scrapy.Spider):
             item.update(brand)
         item.pop("street_address")
         item["street"] = data["StreetAddress"]
+        if item["phone"] == "---":
+            item["phone"] = None
         if data["BrandTypeName"].lower() not in data["Name"].lower():
             item["name"] = data["BrandTypeName"] + " " + data["Name"]
 
@@ -135,5 +137,9 @@ class OrlenSpider(scrapy.Spider):
                 item["opening_hours"] = OpeningHours()
                 item["opening_hours"].add_days_range(DAYS, match.group(1) + ":00", match.group(2) + ":00")
 
-        apply_category(Categories.FUEL_STATION, item)
+        if len(gas_names) > 0 or len(cards_names) == 0:
+            # note that some listed locations are not providing any fuel
+            # but also, some places are not having any detail provided at all
+            # in such cases lets assume that these are fuel stations
+            apply_category(Categories.FUEL_STATION, item)
         yield item

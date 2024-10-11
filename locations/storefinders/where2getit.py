@@ -4,6 +4,7 @@ from scrapy.http import JsonRequest
 
 from locations.dict_parser import DictParser
 from locations.items import Feature
+from locations.pipelines.address_clean_up import clean_address
 
 # To use this storefinder, supply an api_brand_name value as would
 # be found in the following URL template:
@@ -51,7 +52,7 @@ from locations.items import Feature
 # }
 #
 # As filters are complex to understand, it is best to search spiders
-# using "api_query" to see other examples of filters being used.
+# using "api_filter" to see other examples of filters being used.
 
 # Instead of Where2GetIt being provided as a service, it is also
 # possible for brands to self-host the software at a custom domain
@@ -72,13 +73,15 @@ from locations.items import Feature
 class Where2GetItSpider(Spider):
     dataset_attributes = {"source": "api", "api": "where2getit.com"}
     custom_settings = {"ROBOTSTXT_OBEY": False}
-    api_endpoint = ""
-    api_brand_name = ""
-    api_key = ""
-    api_filter = {}
-    api_filter_admin_level = 0  # 0 = no filtering,
-    # 1 = filter by country
-    # 2 = filter by state/province
+    api_endpoint: str = ""
+    api_brand_name: str = ""
+    api_key: str = ""
+    api_filter: dict = {}
+    # api_filter_admin_level:
+    #   0 = no filtering
+    #   1 = filter by country
+    #   2 = filter by state/province
+    api_filter_admin_level: int = 0
 
     def make_request(self, country_code: str = None, state_code: str = None, province_code: str = None) -> JsonRequest:
         where_clause = {}
@@ -136,8 +139,9 @@ class Where2GetItSpider(Spider):
     def parse_country_list(self, response, **kwargs):
         for country in response.json()["response"]["collection"]:
             country_code = country["name"]
-            if self.api_filter_admin_level > 1:
-                for state in pycountry.subdivisions.get(country_code=country_code):
+            subdivisions = pycountry.subdivisions.get(country_code=country_code)
+            if self.api_filter_admin_level > 1 and subdivisions:
+                for state in subdivisions:
                     state_code = state.code[-2:]
                     if state.type == "Province":
                         yield from self.make_request(country_code=country_code, province_code=state_code)
@@ -151,13 +155,18 @@ class Where2GetItSpider(Spider):
             # No results returned for the provided API filter.
             return
         for location in response.json()["response"]["collection"]:
+            self.pre_process_data(location)
+
             item = DictParser.parse(location)
             if not item["ref"]:
                 item["ref"] = location["clientkey"]
-            item["street_address"] = ", ".join(
-                filter(None, [location.get("address1"), location.get("address2"), location.get("address3")])
+            item["street_address"] = clean_address(
+                [location.get("address1"), location.get("address2"), location.get("address3")]
             )
             yield from self.parse_item(item, location)
+
+    def pre_process_data(self, location: dict) -> None:
+        """Override with any pre-processing on the item."""
 
     def parse_item(self, item: Feature, location: dict, **kwargs):
         yield item

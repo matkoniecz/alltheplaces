@@ -1,15 +1,19 @@
+import html
+
 from scrapy.spiders import SitemapSpider
 
 from locations.categories import Categories, apply_category
 from locations.structured_data_spider import StructuredDataSpider
 
 
-class IHGHotelsSpider(SitemapSpider, StructuredDataSpider):
+class IhgHotelsSpider(SitemapSpider, StructuredDataSpider):
     name = "ihg_hotels"
     allowed_domains = ["ihg.com"]
     sitemap_urls = ["https://www.ihg.com/bin/sitemapindex.xml"]
-    sitemap_rules = [(r".*/us/en/.*/hoteldetail$", "parse")]
+    sitemap_follow = ["en.hoteldetail"]
+    sitemap_rules = [(r"/hotels/us/en/[-\w]+/[-\w]+/hoteldetail$", "parse")]
     wanted_types = ["Hotel"]
+    json_parser = "chompjs"
     requires_proxy = True
 
     my_brands = {
@@ -32,8 +36,14 @@ class IHGHotelsSpider(SitemapSpider, StructuredDataSpider):
         "voco": ("Voco Hotels", "Q60750454"),
     }
 
+    def parse(self, response, **kwargs):
+        if response.url.endswith("hoteldetail"):
+            yield from self.parse_sd(response)
+
     def post_process_item(self, item, response, ld_data):
-        item["name"] = item["name"].strip("\n").strip("\t")
+        if not item.get("street_address"):
+            return
+        item["name"] = html.unescape(item["name"].strip())
 
         if (hotel_type := response.url.split("/")[3]) in self.my_brands:
             item["brand"], item["brand_wikidata"] = self.my_brands.get(hotel_type)
