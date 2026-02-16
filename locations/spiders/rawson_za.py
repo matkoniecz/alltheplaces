@@ -16,4 +16,5 @@ class RawsonZASpider(JSONBlobSpider):
         if addr_full:
             item["street_address"] = item.pop("addr_full")
         item["branch"] = item.pop("name")
+        item["street_address"] = item.pop("addr_full", None)
         yield item
